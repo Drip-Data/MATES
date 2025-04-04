@@ -14,17 +14,23 @@ class ProbArguments:
     output_dir: str = field(
         metadata={"help": "The output influence score directory."}
     )
+    data_dir: str = field(
+        metadata={"help": "The directory of the train data."}
+    )
 
     train_files: str = field(
-        metadata={"help": "The directory of the held out data."}
+        metadata={"help": "The path of the train data."}
     )
 
     task: str = field(
         metadata={"help": "The task name."}
     )
+    ref_data_dir: str = field(
+        metadata={"help": "The directory of the reference data."}
+    )
 
     reference_files: str = field(
-        metadata={"help": "The directory of the reference data."}
+        metadata={"help": "The path of the reference data."}
     )
 
     ckpt: int = field(
@@ -50,6 +56,16 @@ class ProbArguments:
         default="llama3-1B",
         metadata={"help": "The model name."}
     )
+
+    weight_decay: float = field(
+        default=0.0, metadata={"help": "Weight decay for AdamW if we use in training in last phase."}
+    )
+
+    lr: float = field(
+        default=2e-5, metadata={"help": "The learning rate of training in last phase."}
+    )
+
+
 
     
 

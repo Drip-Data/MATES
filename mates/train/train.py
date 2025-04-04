@@ -64,32 +64,35 @@ def main():
     # ckpt = 0, 就是随机选取一个batch
     if training_args.ckpt == 0:
         print("ckpt is 0, using all training dataset, randomly select a batch every step.")
-        train_files = data_args.train_files
+        train_files = os.path.join(data_args.data_dir, data_args.train_files)
 
     # 选择ckpt对应的的数据集，在数据筛选的过程中会保存一个json文件
     else:
         print("ckpt is not 0, using the data selected from last ckpt.")
-        train_files = data_args.data_dir + f"{training_args.ckpt}"
+        train_files = os.path.join(data_args.data_dir, data_args.train_files.replace(".json", f"_checkpoint-{training_args.ckpt}.json"))
 
     train_dataset = get_training_dataset(train_files, 
                                    tokenizer, 
                                    data_args.max_seq_length, 
                                    data_args.percentage, 
                                    data_args.sample_data_seed)
-
+    
+    print(train_dataset[0])
+    training_args.output_dir = os.path.join(training_args.output_dir, model_args.model_name)
+    print(training_args.output_dir)
 
     # 待完善，选择与上面数据相对应的权重加载训练
     # when ckpt==0，chose the pretrained model
     if training_args.ckpt == 0:
         print("Loading pretrained model...")
         model_path = model_args.model_name_or_path
-        resume_checkpoint = None
+        resume_checkpoint = False
 
     # ckpt != 0时，chose the ckpt model
     else:
-        checkpoint_path = os.path.join(training_args.output_dir, f"checkpoint-{training_args.ckpt}")
-        print(f"Loading model from checkpoint: {checkpoint_path}")
-        resume_checkpoint = checkpoint_path
+        model_path = os.path.join(training_args.output_dir, f"checkpoint-{training_args.ckpt}")
+        print(f"Loading model from checkpoint: {model_path}")
+        resume_checkpoint = model_path
     
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
@@ -108,7 +111,7 @@ def main():
             model.get_input_embeddings().weight.requires_grad = False
             model.get_output_embeddings().weight.requires_grad = False
 
-    if not isinstance(model, PeftModel) and model_args.lora:
+    if not isinstance(model, PeftModel) and model_args.use_lora:
         lora_config = LoraConfig(
             task_type=TaskType.CAUSAL_LM,
             inference_mode=False,
@@ -152,7 +155,10 @@ def main():
     elif not dist.is_initialized():
         print(model)
 
-
+    print(resume_checkpoint)
+    
+    # update max_steps
+    training_args.max_steps = training_args.ckpt + training_args.update_steps
     # training 
     trainer = Trainer(
         model=model,
@@ -162,8 +168,6 @@ def main():
         tokenizer=tokenizer,
         data_collator=DataCollatorForSeq2Seq(
             tokenizer=tokenizer, model=model, padding="longest"),
-        output_dir=training_args.output_dir,
-        max_steps=training_args.ckpt + training_args.update_steps,
         # report_to="tensorboard"
     )
 

@@ -42,10 +42,11 @@ def load_raw_dataset(train_files: Union[List[str], str], sample_size=None, sampl
     if sample_size == len(processed_datasets):
         return processed_datasets  # not shuffle
 
-    with temp_seed(seed):
-        index = np.random.permutation(len(processed_datasets))[:sample_size]
+    # with temp_seed(seed):
+    #     index = np.random.permutation(len(processed_datasets))[:sample_size]
 
-    sampled_dataset = processed_datasets.select(index)
+    ## 修改使其符合论文中逻辑，选取后10%的数据
+    sampled_dataset = processed_datasets.select(range(len(processed_datasets) - sample_size, len(processed_datasets)))
 
     return sampled_dataset
 

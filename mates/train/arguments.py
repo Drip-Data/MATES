@@ -27,11 +27,15 @@ class TrainingArguments(TrainingArguments):
 
 
 
+
 @dataclass
 class DataArguments:
 
     data_dir: str = field(
         metadata={"help": "The input data dir."}
+    )
+    train_files: str = field(
+        default=None, metadata={"help": "The input training data file (a text file)."}
     )
     
     max_seq_length: int = field(
@@ -43,7 +47,7 @@ class DataArguments:
         default=42, metadata={"help": "The seed to use when sampling data for training."}
     )
 
-    persentage: float = field(
+    percentage: float = field(
         default=1.0, metadata={"help": "The percentage of data to use for training."}
     )
 
@@ -54,6 +58,11 @@ class ModelArguments:
     model_name_or_path: str = field(
         metadata={"help": "The model checkpoint for weights initialization."}
     )
+    model_name: str = field(
+        default="llama3-1B",
+        metadata={"help": "The model name."}
+    )
+
     use_lora: bool = field(
         default=False, metadata={"help": "Whether to use LoRA for fine-tuning."}
     )
@@ -67,6 +76,18 @@ class ModelArguments:
             "choices": ["auto", "bfloat16", "float16", "float32"],
         },
    )
+    lora_r: int = field(
+        default=8, metadata={"help": "The r of LoRA."}
+    )
+    lora_alpha: int = field(
+        default=16, metadata={"help": "The alpha of LoRA."}
+    )
+    lora_dropout: float = field(
+        default=0.05, metadata={"help": "The dropout of LoRA."}
+    )
+    lora_target_modules: List[str] = field(
+        default_factory=lambda: ["q_proj", "v_proj"], metadata={"help": "The target modules of LoRA."}
+    )
     
 def get_data_statistics(lm_datasets):
     """ Get the data statistics of the dataset. """
